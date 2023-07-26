@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -50,10 +51,10 @@ func main() {
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
-
-	if m.nextTool != nil {
+	} else if m.nextTool != nil {
 		m.nextTool()
 	}
+
+	fmt.Print("Press 'Enter' to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
