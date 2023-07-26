@@ -103,7 +103,7 @@ func run() {
 		}
 		defer k.Close()
 
-		k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.CREATE_SUB_KEY)
+		k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.SET_VALUE)
 		if err != nil {
 			log.Fatal(err)
 		}
