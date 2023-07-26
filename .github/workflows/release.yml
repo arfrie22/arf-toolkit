@@ -24,20 +24,22 @@ jobs:
     - name: Install go-winres
       run: go install github.com/tc-hib/go-winres@latest
 
-    - name: Generate
-      run: go generate
+    - name: ls
+      run: ls
+    # - name: Generate
+    #   run: go generate
 
-    - name: Build
-      run: go build
+    # - name: Build
+    #   run: go build
     
-    - name: Upload Windows
-      uses: actions/upload-artifact@v3
-      with:
-        name: Windows
-        path: ${{github.workspace}}\arf-toolkit.exe
+    # - name: Upload Windows
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: Windows
+    #     path: ${{github.workspace}}\arf-toolkit.exe
     
-    - name: Add Windows to Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: ${{github.workspace}}/arf-toolkit.exe
+    # - name: Add Windows to Release
+    #   uses: softprops/action-gh-release@v1
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   with:
+    #     files: ${{github.workspace}}/arf-toolkit.exe
