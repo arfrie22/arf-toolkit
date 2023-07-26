@@ -2,7 +2,6 @@ package tools
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/arfrie22/arf-toolkit/lib/types"
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -39,19 +38,22 @@ func run() {
 	previewers := []previewer{}
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PreviewHandlers`, registry.QUERY_VALUE)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 	defer k.Close()
 
 	previewerIds, err := k.ReadValueNames(-1)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	for _, id := range previewerIds {
 		p, _, err := k.GetStringValue(id)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		previewers = append(previewers, previewer{name: p, id: id})
 	}
@@ -93,25 +95,28 @@ func run() {
 	if confirmed {
 		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension, registry.CREATE_SUB_KEY)
 		if err != nil {
-			log.Fatal(err)
+
 		}
 		defer k.Close()
 
 		k, _, err = registry.CreateKey(k, `shellex`, registry.CREATE_SUB_KEY)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		defer k.Close()
 
 		k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.SET_VALUE)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		defer k.Close()
 
 		err = k.SetStringValue("", choice.id)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		fmt.Println(succeedStyle.Styled("Done."))
 	} else {
