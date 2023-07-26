@@ -17,10 +17,9 @@ type item struct {
 func (i item) Title() string       { return i.tool.Name }
 func (i item) Description() string { return i.tool.Description }
 func (i item) FilterValue() string { return i.tool.Name }
-func (i item) Tool() types.Tool    { return i.tool.Tool() }
 
 type ChooseMsg struct {
-	Tool types.Tool
+	Run func()
 }
 
 type Model struct {
@@ -42,7 +41,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				cmd = func() tea.Msg {
-					return ChooseMsg{Tool: i.Tool()}
+					return ChooseMsg{Run: i.tool.Run}
 				}
 			}
 

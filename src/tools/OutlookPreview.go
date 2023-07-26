@@ -2,29 +2,19 @@ package tools
 
 import (
 	"fmt"
-	"io"
-	"strings"
+	"log"
 
 	"github.com/arfrie22/arf-toolkit/src/lib/types"
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	// "golang.org/x/sys/windows/registry"
+	"github.com/erikgeiser/promptkit/confirmation"
+	"github.com/erikgeiser/promptkit/selection"
+	"github.com/erikgeiser/promptkit/textinput"
+	"github.com/muesli/termenv"
+	"golang.org/x/sys/windows/registry"
 )
 
 var (
 	name string = "Outlook Preview Tool"
 	desc string = "Allows you to set the previewer used by Outlook for any file type."
-)
-
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 type previewer struct {
@@ -36,162 +26,103 @@ func (p previewer) FilterValue() string {
 	return p.name
 }
 
-type previewerDelegate struct{}
+func run() {
+	ti := textinput.New("What file extension would you like to set a previewer for?")
+	ti.Placeholder = "e.g. txt"
 
-func (d previewerDelegate) Height() int                             { return 1 }
-func (d previewerDelegate) Spacing() int                            { return 0 }
-func (d previewerDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d previewerDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(previewer)
-	if !ok {
+	extension, err := ti.RunPrompt()
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	str := fmt.Sprintf("%s", i.name)
+	fmt.Println(extension)
 
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
+	previewers := []previewer{}
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PreviewHandlers`, registry.QUERY_VALUE)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer k.Close()
+
+	previewerIds, err := k.ReadValueNames(-1)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	fmt.Fprint(w, fn(str))
-}
+	for _, id := range previewerIds {
+		p, _, err := k.GetStringValue(id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		previewers = append(previewers, previewer{name: p, id: id})
+	}
 
-type model struct {
-	stage         int
-	fileExtInput  textinput.Model
-	previewerList list.Model
-}
+	blue := termenv.ANSI256Color(32)
+	keywordStyle := termenv.String("keyword").Foreground(termenv.ANSI256Color(33)).Bold()
+	cancelStyle := termenv.String("cancel").Foreground(termenv.ANSI256Color(196)).Bold()
+	succeedStyle := termenv.String("succeed").Foreground(termenv.ANSI256Color(46)).Bold()
 
-func new() types.Tool {
-	ti := textinput.New()
-	ti.Placeholder = "File Extension"
-	ti.Focus()
-	ti.CharLimit = 32
-	ti.Width = 32
+	sp := selection.New("Select a previewer", previewers)
 
-	previewers := []list.Item{}
-	// k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PreviewHandlers`, registry.QUERY_VALUE)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer k.Close()
+	sp.SelectedChoiceStyle = func(c *selection.Choice[previewer]) string {
+		return termenv.String(c.String).Foreground(blue).Bold().Styled(c.Value.name)
+	}
+	sp.UnselectedChoiceStyle = func(c *selection.Choice[previewer]) string {
+		return c.Value.name
+	}
 
-	// previewerIds, err := k.ReadValueNames(-1)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	choice, err := sp.RunPrompt()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// for _, id := range previewerIds {
-	// 	p, _, err := k.GetStringValue(id)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	previewers = append(previewers, previewer{name: p, id: id})
-	// }
-	previewers = append(previewers, previewer{name: "test", id: "test"})
-	previewers = append(previewers, previewer{name: "test2", id: "test2"})
+	fmt.Println(choice)
+	fmt.Println("Using " + keywordStyle.Styled(choice.name) + " for " + keywordStyle.Styled(extension) + ".")
 
-	l := list.New(previewers, previewerDelegate{}, 20, 1)
-	l.Title = "Previewers"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
+	co := confirmation.New("Continue", confirmation.Undecided)
+	co.Template = confirmation.TemplateYN
 
-	return model{
-		stage:         0,
-		fileExtInput:  ti,
-		previewerList: l,
+	confirmed, err := co.RunPrompt()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if confirmed {
+		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension, registry.CREATE_SUB_KEY)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer k.Close()
+
+		k, _, err = registry.CreateKey(k, `shellex`, registry.CREATE_SUB_KEY)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer k.Close()
+
+		k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.CREATE_SUB_KEY)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer k.Close()
+
+		err = k.SetStringValue("", choice.id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(succeedStyle.Styled("Done."))
+	} else {
+		fmt.Println(cancelStyle.Styled("Cancelled."))
 	}
 }
 
 func OutlookPreview() types.ToolItem {
 	return types.ToolItem{
-		Tool:        new,
+		Run:         run,
 		Name:        name,
 		Description: desc,
 	}
-}
-
-func (m model) Update(msg tea.Msg) (types.Tool, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "ctrl+c":
-			return m, tea.Quit
-
-		case "enter":
-			switch m.stage {
-			case 0:
-				v := m.fileExtInput.Value()
-				if v != "" {
-					m.stage = 1
-				}
-			case 1:
-				i, ok := m.previewerList.SelectedItem().(previewer)
-				if ok {
-					fmt.Println(i)
-					return m, tea.Quit
-				}
-				// if ok {
-				// 	k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+m.fileExtInput.Value(), registry.CREATE_SUB_KEY)
-				// 	if err != nil {
-				// 		log.Fatal(err)
-				// 	}
-				// 	defer k.Close()
-
-				// 	k, _, err = registry.CreateKey(k, `shellex`, registry.CREATE_SUB_KEY)
-				// 	if err != nil {
-				// 		log.Fatal(err)
-				// 	}
-				// 	defer k.Close()
-
-				// 	k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.CREATE_SUB_KEY)
-				// 	if err != nil {
-				// 		log.Fatal(err)
-				// 	}
-				// 	defer k.Close()
-
-				// 	err = k.SetStringValue("", i.id)
-				// 	if err != nil {
-				// 		log.Fatal(err)
-				// 	}
-
-				// 	return m, tea.Quit
-				// }
-			}
-		}
-
-	case tea.WindowSizeMsg:
-		m.fileExtInput.Width = msg.Width - 4
-		m.previewerList.SetSize(msg.Width-4, msg.Height-4)
-	}
-
-	switch m.stage {
-	case 0:
-		var cmd tea.Cmd
-		m.fileExtInput, cmd = m.fileExtInput.Update(msg)
-		return m, cmd
-	case 1:
-		var cmd tea.Cmd
-		m.previewerList, cmd = m.previewerList.Update(msg)
-		return m, cmd
-	}
-
-	return m, nil
-}
-
-func (m model) View() string {
-	switch m.stage {
-	case 0:
-		return m.fileExtInput.View()
-	case 1:
-		return m.previewerList.View()
-	}
-
-	return ""
 }
