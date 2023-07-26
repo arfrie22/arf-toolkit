@@ -3,7 +3,15 @@
     "APP": {
       "0000": [
         "icon.png",
+        "icon64.png",
+        "icon48.png",
+        "icon32.png",
         "icon16.png"
+      ]
+    },
+    "OTHER": {
+      "0000": [
+        "icon.png"
       ]
     }
   },
@@ -11,10 +19,10 @@
     "#1": {
       "0409": {
         "identity": {
-          "name": "",
-          "version": ""
+          "name": "ARF Toolkit",
+          "version": "0.1.0"
         },
-        "description": "",
+        "description": "A set of tools to help with Windows issues",
         "minimum-os": "win7",
         "execution-level": "administrator",
         "ui-access": false,
@@ -36,8 +44,8 @@
     "#1": {
       "0000": {
         "fixed": {
-          "file_version": "0.0.0.0",
-          "product_version": "0.0.0.0"
+          "file_version": "0.1.0",
+          "product_version": "0.1.0"
         },
         "info": {
           "0409": {
@@ -45,12 +53,12 @@
             "CompanyName": "",
             "FileDescription": "",
             "FileVersion": "",
-            "InternalName": "",
+            "InternalName": "ARF Toolkit",
             "LegalCopyright": "",
             "LegalTrademarks": "",
             "OriginalFilename": "",
             "PrivateBuild": "",
-            "ProductName": "",
+            "ProductName": "ARF Toolkit",
             "ProductVersion": "",
             "SpecialBuild": ""
           }
