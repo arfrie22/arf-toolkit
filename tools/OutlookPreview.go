@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/arfrie22/arf-toolkit/src/lib/types"
+	"github.com/arfrie22/arf-toolkit/lib/types"
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/erikgeiser/promptkit/selection"
 	"github.com/erikgeiser/promptkit/textinput"

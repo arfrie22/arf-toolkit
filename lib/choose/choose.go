@@ -1,7 +1,7 @@
 package choose
 
 import (
-	"github.com/arfrie22/arf-toolkit/src/lib/types"
+	"github.com/arfrie22/arf-toolkit/lib/types"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

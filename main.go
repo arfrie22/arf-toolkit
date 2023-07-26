@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/arfrie22/arf-toolkit/src/lib/choose"
-	"github.com/arfrie22/arf-toolkit/src/tools"
+	"github.com/arfrie22/arf-toolkit/lib/choose"
+	"github.com/arfrie22/arf-toolkit/tools"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
