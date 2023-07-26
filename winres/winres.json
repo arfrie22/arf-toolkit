@@ -20,7 +20,7 @@
       "0409": {
         "identity": {
           "name": "ARF Toolkit",
-          "version": "0.1.0"
+          "version": ""
         },
         "description": "A set of tools to help with Windows issues",
         "minimum-os": "win7",
@@ -44,8 +44,8 @@
     "#1": {
       "0000": {
         "fixed": {
-          "file_version": "0.1.0",
-          "product_version": "0.1.0"
+          "file_version": "0.0.0.0",
+          "product_version": "0.0.0.0"
         },
         "info": {
           "0409": {
