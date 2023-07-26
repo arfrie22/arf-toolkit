@@ -36,8 +36,6 @@ func run() {
 		return
 	}
 
-	fmt.Println(extension)
-
 	previewers := []previewer{}
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PreviewHandlers`, registry.QUERY_VALUE)
 	if err != nil {
@@ -71,6 +69,9 @@ func run() {
 	sp.UnselectedChoiceStyle = func(c *selection.Choice[previewer]) string {
 		return c.Value.name
 	}
+	sp.FinalChoiceStyle = func(c *selection.Choice[previewer]) string {
+		return termenv.String(c.String).Foreground(blue).Bold().Styled(c.Value.name)
+	}
 
 	choice, err := sp.RunPrompt()
 	if err != nil {
@@ -78,7 +79,6 @@ func run() {
 		return
 	}
 
-	fmt.Println(choice)
 	fmt.Println("Using " + keywordStyle.Styled(choice.name) + " for " + keywordStyle.Styled(extension) + ".")
 
 	co := confirmation.New("Continue", confirmation.Undecided)
