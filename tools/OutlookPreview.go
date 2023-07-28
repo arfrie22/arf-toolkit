@@ -63,26 +63,27 @@ func run() {
 	cancelStyle := termenv.String("cancel").Foreground(termenv.ANSI256Color(196)).Bold()
 	succeedStyle := termenv.String("succeed").Foreground(termenv.ANSI256Color(46)).Bold()
 
-	func() {
+	exists := func() bool {
 		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+`\shellex\{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.QUERY_VALUE)
 		if err != nil {
-			return
+			return false
 		}
 		defer k.Close()
 
 		id, _, err := k.GetStringValue("")
 		if err != nil {
-			return
+			return false
 		}
 
 		for _, p := range previewers {
 			if p.id == id {
 				fmt.Println("The previewer for " + keywordStyle.Styled(extension) + " is currently set to " + keywordStyle.Styled(p.name) + ".")
-				return
+				return true
 			}
 		}
 
 		fmt.Println("The previewer for " + keywordStyle.Styled(extension) + " is set but unknown (" + keywordStyle.Styled(id) + ").")
+		return true
 	}()
 
 	previewers = append([]previewer{previewer{name: "None", id: ""}}, previewers...)
@@ -118,17 +119,21 @@ func run() {
 
 	if confirmed {
 		if choice.id == "" {
-			k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+`\shellex`, registry.SET_VALUE)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			defer k.Close()
+			if exists {
+				k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+`\shellex`, registry.SET_VALUE)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				defer k.Close()
 
-			err = registry.DeleteKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`)
-			if err != nil {
-				fmt.Println(err)
-				return
+				err = registry.DeleteKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+			} else {
+				fmt.Println("No previewer set for " + keywordStyle.Styled(extension) + ".")
 			}
 		} else {
 			k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension, registry.CREATE_SUB_KEY)
