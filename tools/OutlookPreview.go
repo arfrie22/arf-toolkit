@@ -63,6 +63,28 @@ func run() {
 	cancelStyle := termenv.String("cancel").Foreground(termenv.ANSI256Color(196)).Bold()
 	succeedStyle := termenv.String("succeed").Foreground(termenv.ANSI256Color(46)).Bold()
 
+	func() {
+		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+"/shellex/8895b1c6-b41f-4c1c-a562-0d564250836f", registry.QUERY_VALUE)
+		if err != nil {
+			return
+		}
+		defer k.Close()
+
+		id, _, err := k.GetStringValue("")
+		if err != nil {
+			return
+		}
+
+		for _, p := range previewers {
+			if p.id == id {
+				fmt.Println("The previewer for " + keywordStyle.Styled(extension) + " is currently set to " + keywordStyle.Styled(p.name) + ".")
+				return
+			}
+		}
+
+		fmt.Println("The previewer for " + keywordStyle.Styled(extension) + " is set but unknown (" + keywordStyle.Styled(id) + ").")
+	}()
+
 	sp := selection.New("Select a previewer", previewers)
 
 	sp.SelectedChoiceStyle = func(c *selection.Choice[previewer]) string {
