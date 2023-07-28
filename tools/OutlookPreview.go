@@ -64,7 +64,7 @@ func run() {
 	succeedStyle := termenv.String("succeed").Foreground(termenv.ANSI256Color(46)).Bold()
 
 	func() {
-		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+"/shellex/{8895b1c6-b41f-4c1c-a562-0d564250836f}", registry.QUERY_VALUE)
+		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+`\shellex\{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.QUERY_VALUE)
 		if err != nil {
 			return
 		}
