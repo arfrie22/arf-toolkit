@@ -85,6 +85,8 @@ func run() {
 		fmt.Println("The previewer for " + keywordStyle.Styled(extension) + " is set but unknown (" + keywordStyle.Styled(id) + ").")
 	}()
 
+	previewers = append([]previewer{previewer{name: "None", id: ""}}, previewers...)
+
 	sp := selection.New("Select a previewer", previewers)
 
 	sp.SelectedChoiceStyle = func(c *selection.Choice[previewer]) string {
@@ -115,30 +117,45 @@ func run() {
 	}
 
 	if confirmed {
-		k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension, registry.CREATE_SUB_KEY)
-		if err != nil {
+		if choice.id == "" {
+			k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension+`\shellex`, registry.SET_VALUE)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer k.Close()
 
-		}
-		defer k.Close()
+			err = registry.DeleteKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		} else {
+			k, err := registry.OpenKey(registry.CLASSES_ROOT, `.`+extension, registry.CREATE_SUB_KEY)
+			if err != nil {
 
-		k, _, err = registry.CreateKey(k, `shellex`, registry.CREATE_SUB_KEY)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer k.Close()
+			}
+			defer k.Close()
 
-		k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.SET_VALUE)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer k.Close()
+			k, _, err = registry.CreateKey(k, `shellex`, registry.CREATE_SUB_KEY)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer k.Close()
 
-		err = k.SetStringValue("", choice.id)
-		if err != nil {
-			fmt.Println(err)
-			return
+			k, _, err = registry.CreateKey(k, `{8895b1c6-b41f-4c1c-a562-0d564250836f}`, registry.SET_VALUE)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer k.Close()
+
+			err = k.SetStringValue("", choice.id)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 		}
 		fmt.Println(succeedStyle.Styled("Done."))
 	} else {
